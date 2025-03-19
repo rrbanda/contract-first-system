@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: contract-first-openapi-api-pipeline
+  namespace: openshift-gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    system: contract-first
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rrbanda/developer-charts
+    targetRevision: HEAD
+    path: api-specification-pipeline
+    helm:
+      values: |
+        domain: rrbanda
+        system: contract-first
+        component: openapi
+        groupid: com.redhat.demo.contractfirst
+        apicurioRegistry: registry-apicurio-registry.apps.cluster-xvdzv.dynamic.redhatworkshops.io
+        mockRegistry: microcks-microcks.apps.cluster-xvdzv.dynamic.redhatworkshops.io
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: contract-first-build
+  syncPolicy:
+    automated: 
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=false
+    - RespectIgnoreDifferences=true
+    - ApplyOutOfSyncOnly=true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 10m
