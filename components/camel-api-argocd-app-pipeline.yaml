@@ -1,0 +1,37 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: contract-first-camel-api-pipeline
+  namespace: openshift-gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    system: contract-first
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rrbanda/developer-charts
+    targetRevision: HEAD
+    path: quarkus-pipeline
+    helm:
+      values: |
+        domain: rrbanda
+        system: contract-first
+        component: camel-api
+        deployment: jvm
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: contract-first-build
+  syncPolicy:
+    automated: 
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=false
+    - RespectIgnoreDifferences=true
+    - ApplyOutOfSyncOnly=true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 10m
