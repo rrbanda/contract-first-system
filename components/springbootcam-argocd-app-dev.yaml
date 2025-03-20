@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: contract-first-springbootcam-dev
+  namespace: openshift-gitops
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  labels:
+    system: contract-first
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/rrbanda/developer-charts
+    targetRevision: HEAD
+    path: spring-boot-application
+    helm:
+      values: |
+        system: contract-first
+        component: springbootcam
+        environment: dev
+        image:
+          tag: latest
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: contract-first-dev
+  syncPolicy:
+    automated: 
+      prune: true
+      selfHeal: true
+    syncOptions:
+    - CreateNamespace=false
+    - RespectIgnoreDifferences=true
+    - ApplyOutOfSyncOnly=true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 10m
